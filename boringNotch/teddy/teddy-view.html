@@ -1,0 +1,238 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin:0; height:100%; background:transparent; overflow:hidden; }
+  svg { width:100%; height:100%; display:block; }
+</style></head>
+<body>
+<svg class="teddy-head" data-state="idle" xmlns="http://www.w3.org/2000/svg" viewBox="55 22 315 258">
+  <defs>
+    <radialGradient id="gHead" cx="0.36" cy="0.28" r="0.85">
+      <stop offset="0" stop-color="#FFFCF0"/>
+      <stop offset="0.45" stop-color="#F4EBD0"/>
+      <stop offset="0.85" stop-color="#E3D6AC"/>
+      <stop offset="1" stop-color="#C9B88A"/>
+    </radialGradient>
+    <radialGradient id="gMuzzle" cx="0.42" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#FFFEF8"/>
+      <stop offset="0.6" stop-color="#F6EEDA"/>
+      <stop offset="1" stop-color="#EBE0BC"/>
+    </radialGradient>
+    <radialGradient id="gEar" cx="0.38" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#FBF3DB"/>
+      <stop offset="0.6" stop-color="#F0E4C0"/>
+      <stop offset="1" stop-color="#C9B887"/>
+    </radialGradient>
+    <radialGradient id="gEarIn" cx="0.5" cy="0.4" r="0.75">
+      <stop offset="0" stop-color="#FBE7AE"/>
+      <stop offset="0.7" stop-color="#EDCB7F"/>
+      <stop offset="1" stop-color="#C9A55A"/>
+    </radialGradient>
+    <radialGradient id="gBody" cx="0.38" cy="0.22" r="0.95">
+      <stop offset="0" stop-color="#FDEEB9"/>
+      <stop offset="0.5" stop-color="#F3DFA3"/>
+      <stop offset="1" stop-color="#CFB46C"/>
+    </radialGradient>
+    <radialGradient id="gBelly" cx="0.4" cy="0.25" r="0.85">
+      <stop offset="0" stop-color="#FFF6D8"/>
+      <stop offset="0.6" stop-color="#F8EDC8"/>
+      <stop offset="1" stop-color="#E3D09A"/>
+    </radialGradient>
+    <linearGradient id="gArm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFAEA"/>
+      <stop offset="0.45" stop-color="#F3EACF"/>
+      <stop offset="1" stop-color="#C4B58C"/>
+    </linearGradient>
+    <radialGradient id="gNose" cx="0.35" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#9A6470"/>
+      <stop offset="0.5" stop-color="#6E3B45"/>
+      <stop offset="1" stop-color="#41202A"/>
+    </radialGradient>
+    <radialGradient id="gEye" cx="0.38" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#8A5A66"/>
+      <stop offset="0.55" stop-color="#5E3440"/>
+      <stop offset="1" stop-color="#341A22"/>
+    </radialGradient>
+
+    <pattern id="thread" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="3" height="3" fill="none"/>
+      <line x1="0" y1="1.5" x2="3" y2="1.5" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="1"/>
+      <line x1="0" y1="0" x2="3" y2="0" stroke="#000000" stroke-opacity="0.18" stroke-width="0.8"/>
+    </pattern>
+
+    <!-- Stoff Jersey: feine Gewebestruktur, glatte Kanten -->
+    <filter id="fabricKnit" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="500" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="1.1 0.7" numOctaves="3" seed="3" result="weave"/>
+      <feDiffuseLighting in="weave" lighting-color="#FFFFFF" surfaceScale="1.8" diffuseConstant="1.05" result="lit">
+        <feDistantLight azimuth="225" elevation="68"/>
+      </feDiffuseLighting>
+      <feComponentTransfer in="lit" result="litSoft"><feFuncR type="linear" slope="0.30" intercept="0.74"/><feFuncG type="linear" slope="0.30" intercept="0.74"/><feFuncB type="linear" slope="0.30" intercept="0.74"/></feComponentTransfer>
+      <feComposite in="litSoft" in2="SourceGraphic" operator="in" result="litMasked"/>
+      <feBlend in="SourceGraphic" in2="litMasked" mode="multiply"/>
+    </filter>
+
+    <!-- Stoff Velours: weicher Flor, glatte Kanten -->
+    <filter id="fabricVelvet" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="500" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6 0.35" numOctaves="3" seed="5" result="pile"/>
+      <feDiffuseLighting in="pile" lighting-color="#FFFFFF" surfaceScale="1.1" diffuseConstant="1.08" result="lit">
+        <feDistantLight azimuth="225" elevation="72"/>
+      </feDiffuseLighting>
+      <feComponentTransfer in="lit" result="litSoft"><feFuncR type="linear" slope="0.30" intercept="0.74"/><feFuncG type="linear" slope="0.30" intercept="0.74"/><feFuncB type="linear" slope="0.30" intercept="0.74"/></feComponentTransfer>
+      <feComposite in="litSoft" in2="SourceGraphic" operator="in" result="litMasked"/>
+      <feBlend in="SourceGraphic" in2="litMasked" mode="multiply"/>
+    </filter>
+
+    <!-- Abgewetzte, flauschige Stelle (nur hier bewusst fusselig) -->
+    <filter id="fluff" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="500">
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="3" seed="12" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation="0.6"/>
+    </filter>
+
+    <filter id="blur2" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="blur4" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="blur8" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="blur12" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="12"/></filter>
+
+    <clipPath id="clipNose"><rect x="165" y="119" width="72" height="43" rx="26" ry="21.5"/></clipPath>
+    <clipPath id="clipEyeL"><ellipse cx="158" cy="94" rx="8" ry="11.5" transform="rotate(-6 158 94)"/></clipPath>
+    <clipPath id="clipEyeR"><ellipse cx="246" cy="94" rx="8" ry="11.5" transform="rotate(6 246 94)"/></clipPath>
+  </defs>
+  <style>
+  svg.teddy-head { overflow: visible; }
+  .teddy-head #head { transform-origin: 202px 236px; transition: transform .45s cubic-bezier(.3,1.4,.5,1); animation: bob 4.2s ease-in-out infinite; }
+  .teddy-head .eye { transform-box: fill-box; transform-origin: center; animation: blink 5.5s infinite; }
+  .teddy-head #eye-r { animation-delay: .04s; }
+  .teddy-head #eyes-look { transform-origin: 202px 94px; transition: transform .35s ease; }
+  .teddy-head #ear-wrap-l { transform-origin: 124px 118px; transition: transform .4s ease; }
+  .teddy-head #ear-wrap-r { transform-origin: 280px 118px; transition: transform .4s ease; }
+  .teddy-head #mouth-open { transform-box: fill-box; transform-origin: center; transform: scaleY(0); }
+  .teddy-head #smile { transition: opacity .15s; }
+  .teddy-head #paw { transform-origin: 333px 272px; transform: translateY(60px); opacity: 0; transition: transform .4s ease, opacity .3s; }
+  .teddy-head #paw-swing { transform-origin: 333px 272px; }
+  .teddy-head #think-dots { opacity: 0; transition: opacity .3s; }
+  .teddy-head .dot { transform-box: fill-box; transform-origin: center; }
+
+  @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-2.5px) } }
+  @keyframes blink { 0%,92%,100% { transform: scaleY(1) } 95% { transform: scaleY(.08) } }
+  @keyframes talk { 0%,100% { transform: scaleY(.05) } 20% { transform: scaleY(1) } 40% { transform: scaleY(.35) } 60% { transform: scaleY(.85) } 80% { transform: scaleY(.2) } }
+  @keyframes talkhead { 0%,100% { transform: rotate(0) translateY(0) } 25% { transform: rotate(1.2deg) translateY(-1.5px) } 75% { transform: rotate(-1.2deg) translateY(-1px) } }
+  @keyframes wave { 0%,100% { transform: rotate(-22deg) } 50% { transform: rotate(16deg) } }
+  @keyframes dotpulse { 0%,100% { transform: scale(.6); opacity: .45 } 50% { transform: scale(1.15); opacity: 1 } }
+  @keyframes think { 0%,100% { transform: rotate(5deg) translateY(0) } 50% { transform: rotate(6.5deg) translateY(-1px) } }
+
+  /* Zuhoeren: Kopf leicht geneigt, Ohren gespitzt, Augen etwas groesser */
+  .teddy-head[data-state="listening"] #head { animation: none; transform: rotate(-5deg) translateY(-2px); }
+  .teddy-head[data-state="listening"] #eyes-look { transform: scale(1.12); }
+  .teddy-head[data-state="listening"] #ear-wrap-l { transform: rotate(-9deg) translateY(-3px); }
+  .teddy-head[data-state="listening"] #ear-wrap-r { transform: rotate(9deg) translateY(-3px); }
+
+  /* Denken: Blick nach oben rechts, Kopf zur anderen Seite, Punkte */
+  .teddy-head[data-state="thinking"] #head { animation: think 2.4s ease-in-out infinite; }
+  .teddy-head[data-state="thinking"] #eyes-look { transform: translate(5px,-5px); }
+  .teddy-head[data-state="thinking"] #think-dots { opacity: 1; }
+  .teddy-head[data-state="thinking"] .dot { animation: dotpulse 1.2s ease-in-out infinite; }
+  .teddy-head[data-state="thinking"] .d2 { animation-delay: .2s; }
+  .teddy-head[data-state="thinking"] .d3 { animation-delay: .4s; }
+
+  /* Sprechen: Mund geht auf und zu, Kopf wippt leicht */
+  .teddy-head[data-state="speaking"] #head { animation: talkhead .9s ease-in-out infinite; }
+  .teddy-head[data-state="speaking"] #mouth-open { animation: talk .42s ease-in-out infinite; }
+  .teddy-head[data-state="speaking"] #smile { opacity: 0; }
+
+  /* Winken: Pfote kommt von unten und schwingt */
+  .teddy-head[data-state="waving"] #head { animation: none; transform: rotate(-3deg); }
+  .teddy-head[data-state="waving"] #paw { transform: translateY(0); opacity: 1; }
+  .teddy-head[data-state="waving"] #paw-swing { animation: wave .7s ease-in-out infinite; }
+  .teddy-head[data-state="waving"] #eyes-look { transform: scale(1.08); }
+</style>
+  <g id="think-dots" fill="#F4EBD0">
+    <circle class="dot d1" cx="300" cy="62" r="5"/>
+    <circle class="dot d2" cx="318" cy="48" r="6.5"/>
+    <circle class="dot d3" cx="340" cy="38" r="8"/>
+  </g>
+  <g id="teddy-head-root">
+  <g id="head">
+      <!-- Ohren: hinter dem Kopf, hochovale Form, innen gelblich -->
+      <g id="ear-wrap-l"><g id="ear-l" transform="rotate(-10 121 100)">
+        <ellipse cx="121" cy="100" rx="26" ry="31" fill="url(#gEar)" filter="url(#fabricKnit)"/>
+        <ellipse cx="127" cy="102" rx="15" ry="20" fill="url(#gEarIn)" filter="url(#fabricVelvet)"/>
+        <ellipse cx="119" cy="116" rx="12" ry="5" fill="#7A5E22" opacity="0.25" filter="url(#blur4)"/>
+      </g></g>
+      <g id="ear-wrap-r"><g id="ear-r" transform="rotate(10 283 100)">
+        <ellipse cx="283" cy="100" rx="26" ry="31" fill="url(#gEar)" filter="url(#fabricKnit)"/>
+        <ellipse cx="277" cy="102" rx="15" ry="20" fill="url(#gEarIn)" filter="url(#fabricVelvet)"/>
+        <ellipse cx="285" cy="116" rx="12" ry="5" fill="#7A5E22" opacity="0.30" filter="url(#blur4)"/>
+      </g></g>
+      <!-- Schatten des Kopfes auf den Ohren -->
+      <circle cx="203" cy="154" r="92" fill="#4A3A15" opacity="0.35" filter="url(#blur8)"/>
+
+      <!-- Kopf -->
+      <circle cx="200" cy="150" r="92" fill="url(#gHead)" filter="url(#fabricKnit)"/>
+      <ellipse cx="200" cy="96" rx="78" ry="22" fill="#9C8D66" opacity="0.12" filter="url(#blur8)"/>
+
+      <!-- Schnauze: groß, füllt die untere Kopfhälfte -->
+      <ellipse cx="204" cy="182" rx="62" ry="56" fill="#5A4A22" opacity="0.10" filter="url(#blur8)"/>
+      <ellipse cx="202" cy="180" rx="62" ry="56" fill="url(#gMuzzle)" filter="url(#fabricKnit)"/>
+
+      <!-- Abgenutzte Stelle rechts an der Schnauze -->
+      <g id="worn" filter="url(#fluff)">
+        <circle cx="236" cy="172" r="15" fill="#FFFFFF"/>
+        <circle cx="226" cy="190" r="12" fill="#FFFDF5"/>
+        <circle cx="248" cy="160" r="9" fill="#FFFFFF"/>
+        <circle cx="208" cy="214" r="9" fill="#FBF7EA"/>
+        <circle cx="222" cy="210" r="8" fill="#FFFFFF"/>
+      </g>
+      <g stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" opacity="0.85" fill="none">
+        <path d="M246 164 q6 -6 10 -3"/>
+        <path d="M250 178 q7 -2 9 3"/>
+        <path d="M232 202 q2 7 8 8"/>
+        <path d="M214 222 q-1 6 4 8"/>
+        <path d="M252 190 q5 3 4 8"/>
+      </g>
+
+      <!-- Nase: groß und breit, wie beim Original -->
+      <rect x="167" y="127" width="72" height="43" rx="26" ry="21.5" fill="#2A1218" opacity="0.45" filter="url(#blur4)"/>
+      <rect x="165" y="119" width="72" height="43" rx="26" ry="21.5" fill="url(#gNose)"/>
+      <g clip-path="url(#clipNose)"><rect x="160" y="115" width="84" height="55" fill="url(#thread)"/></g>
+      <rect x="165" y="119" width="72" height="43" rx="26" ry="21.5" fill="none" stroke="#2F161D" stroke-width="1.3" opacity="0.6"/>
+      <ellipse cx="185" cy="131" rx="7" ry="3.6" fill="#FFFFFF" transform="rotate(-12 185 131)"/>
+
+      <!-- Augen: breit-oval mit hellem Stickrand, hoch im Gesicht -->
+      <g id="eyes-look"><g id="eyes">
+        <g class="eye" id="eye-l">
+          <ellipse cx="159" cy="98" rx="12" ry="16" fill="#4A3A22" opacity="0.28" filter="url(#blur4)" transform="rotate(-6 159 98)"/>
+          <ellipse cx="158" cy="94" rx="12" ry="16" fill="none" stroke="#FFFFFF" stroke-width="1.6" opacity="0.6" transform="rotate(-6 158 94)"/>
+          <ellipse cx="158" cy="94" rx="8" ry="11.5" fill="url(#gEye)" transform="rotate(-6 158 94)"/>
+          <g clip-path="url(#clipEyeL)"><rect x="140" y="78" width="34" height="32" fill="url(#thread)"/></g>
+          <ellipse cx="155" cy="89" rx="2.4" ry="3" fill="#FFFFFF"/>
+        </g>
+        <g class="eye" id="eye-r">
+          <ellipse cx="247" cy="98" rx="12" ry="16" fill="#4A3A22" opacity="0.28" filter="url(#blur4)" transform="rotate(6 247 98)"/>
+          <ellipse cx="246" cy="94" rx="12" ry="16" fill="none" stroke="#FFFFFF" stroke-width="1.6" opacity="0.6" transform="rotate(6 246 94)"/>
+          <ellipse cx="246" cy="94" rx="8" ry="11.5" fill="url(#gEye)" transform="rotate(6 246 94)"/>
+          <g clip-path="url(#clipEyeR)"><rect x="230" y="78" width="34" height="32" fill="url(#thread)"/></g>
+          <ellipse cx="243" cy="89" rx="2.4" ry="3" fill="#FFFFFF"/>
+        </g>
+      </g></g>
+
+      <!-- Lächeln: breit und flach -->
+      <g id="smile"><path d="M142 194 Q204 220 264 190" stroke="#2C1A10" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.30" filter="url(#blur2)"/>
+      <path id="mouth" d="M142 191 Q204 217 264 187" stroke="#8A4B3A" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <path d="M146 190 Q204 213 260 186" stroke="#D49A82" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/></g>
+      <g id="mouth-open"><ellipse cx="204" cy="201" rx="23" ry="12" fill="#3F1A22"/><ellipse cx="204" cy="207" rx="13" ry="5" fill="#B5646E" opacity="0.8"/></g>
+
+      <ellipse cx="168" cy="82" rx="30" ry="12" fill="#FFFFFF" opacity="0.26" filter="url(#blur8)" transform="rotate(-20 166 70)"/>
+    </g>
+  </g>
+  <g id="paw"><g id="paw-swing">
+    <path d="M318 272 L318 168 a15 15 0 0 1 30 0 L348 272 Z" fill="url(#gArm)" filter="url(#fabricKnit)"/>
+    <path d="M319 178 a14 14 0 0 1 28 0" stroke="#B3A37A" stroke-width="3" fill="none" opacity="0.35" filter="url(#blur2)"/>
+  </g></g>
+</svg>
+<script>
+  window.setTeddyState = function(name) {
+    document.querySelector('svg.teddy-head').dataset.state = name;
+  };
+</script>
+</body></html>

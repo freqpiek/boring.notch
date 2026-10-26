@@ -349,6 +349,8 @@ struct ContentView: View {
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
                     case .shelf:
                         ShelfView()
+                    case .teddy:
+                        TeddyAssistantView()
                     }
                 }
                 .transition(
@@ -377,7 +379,11 @@ struct ContentView: View {
                 Rectangle()
                     .fill(.black)
                     .frame(width: vm.closedNotchSize.width - 20)
-                MinimalFaceFeatures()
+                TeddyFace()
+                    .frame(
+                        width: max(0, vm.effectiveClosedNotchHeight - 12) + 8,
+                        height: max(0, vm.effectiveClosedNotchHeight - 6)
+                    )
             }
         }.frame(
             height: vm.effectiveClosedNotchHeight,

@@ -60,6 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var whatsNewWindow: NSWindow?
     var timer: Timer?
     var closeNotchTask: Task<Void, Never>?
+    var teddyOpenedNotch = false
     private var previousScreens: [NSScreen]?
     private var onboardingWindowController: NSWindowController?
     private var screenLockedObserver: Any?
@@ -362,6 +363,38 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     type: .music,
                     duration: 3.0
                 )
+            }
+        }
+
+        // Teddy: Push-to-Talk (Taste gedrückt halten)
+        Task { @MainActor [weak self] in
+            TeddyAssistant.shared.onFinished = { [weak self] in
+                guard let self else { return }
+                if self.teddyOpenedNotch {
+                    self.teddyOpenedNotch = false
+                    self.vm.close()
+                }
+                self.coordinator.currentView = .home
+            }
+        }
+
+        KeyboardShortcuts.onKeyDown(for: .teddyPushToTalk) { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.closeNotchTask?.cancel()
+                self.closeNotchTask = nil
+                if self.vm.notchState == .closed {
+                    self.teddyOpenedNotch = true
+                    self.vm.open()
+                }
+                self.coordinator.currentView = .teddy
+                TeddyAssistant.shared.startListening()
+            }
+        }
+
+        KeyboardShortcuts.onKeyUp(for: .teddyPushToTalk) {
+            Task { @MainActor in
+                TeddyAssistant.shared.stopListening()
             }
         }
 
