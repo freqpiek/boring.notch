@@ -1,0 +1,367 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  #c {
+    position: absolute; left: 0; top: 0; display: none; will-change: transform;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.38));
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/*
+  Teddy zieht aus der Notch: Kopf = Pendel am Greifpunkt, Körper = Stoff (Verlet-Gitter),
+  Arme = Pendel an den Schultern. Alle Längen in Pixeln; "s" ist der aktuelle Maßstab
+  (Pixel pro SVG-Einheit des Teddys).
+*/
+const LAYERS = /*LAYERS*/;
+
+(function () {
+  'use strict';
+
+  const K = LAYERS.k;
+  const CW = 560, CH = 720;          // Zeichenfläche in CSS-Pixeln
+  const GX = 280, GY = 250;          // Lage des Greifpunkts auf der Zeichenfläche
+  const DPR = Math.max(1, window.devicePixelRatio || 1);
+
+  const cv = document.getElementById('c');
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+  cv.style.width = CW + 'px'; cv.style.height = CH + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+
+  const imgs = {};
+  let ready = false, loadedCount = 0;
+  ['head', 'body', 'arm'].forEach(k => {
+    const im = new Image();
+    im.onload = () => { if (++loadedCount === 3) ready = true; };
+    im.src = LAYERS[k].src;
+    imgs[k] = im;
+  });
+
+  // ---------- Konstanten ----------
+  const S_FULL = 0.46;               // Maßstab, wenn der Teddy ganz draußen ist
+  const S0 = 0.14;                   // Maßstab des Kopfes in der geschlossenen Notch
+  const G_SVG = { x: 200, y: 70 };   // Greifpunkt am Kopf (SVG-Koordinaten)
+  const HEAD_COM_Y = 150;            // Kopfmitte
+  const NECK_SVG = { x: 200, y: 238 };
+  const GRAV = 5200;                 // px/s²
+  const SUB = 1 / 240;               // Physik-Zeitschritt
+  const COLS = 8, ROWS = 10;
+  const ITER = 10;
+  const SHAPE = 0.002;               // schwache Rückstellung zur Körperform (Stoff mit Füllung)
+  const DAMP = 0.9965;
+  const EMERGE_T = 0.32, RETURN_T = 0.34;
+
+  const SHOULDER = { l: { x: 171, y: 276 }, r: { x: 229, y: 276 } };
+  const HAND_L = { x: 66, y: 318 };
+  const TIP_ANG_L = Math.atan2(HAND_L.y - SHOULDER.l.y, HAND_L.x - SHOULDER.l.x);   // Winkel der Armspitze im Bild
+  const ARM_COM = 56;                // Abstand Schulter -> Schwerpunkt Arm (SVG-Einheiten)
+  const ARM_LIMIT = { min: 0.80, max: 1.85 };  // Betrag des Armwinkels relativ zum Körper (rad)
+
+  // ---------- Zustand ----------
+  const st = {
+    active: false, phase: 'idle', t: 0, acc: 0,
+    target: { x: 0, y: 0 }, p0: { x: 0, y: 0 },
+    gx: 0, gy: 0, gvx: 0, gvy: 0, omega: 38,
+    th: 0, thv: 0,
+    s: S0, lambda: 1,
+    sFrom: S0, lamFrom: 1, tr: 0,
+    pts: [], cons: [],
+    arms: {
+      l: { th: -0.9, v: 0, ax: 0, ay: 0, vx: 0, vy: 0, pax: 0, pay: 0, has: false },
+      r: { th: 0.9, v: 0, ax: 0, ay: 0, vx: 0, vy: 0, pax: 0, pay: 0, has: false }
+    },
+    manual: false, lastTs: 0
+  };
+
+  // ---------- Hilfsfunktionen ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+  const easeInCubic = t => t * t * t;
+  const easeOutBack = t => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+
+  const bb = LAYERS.body;
+  const restSvg = (i, j) => ({ x: bb.ox + bb.w * i / (COLS - 1), y: bb.oy + bb.h * j / (ROWS - 1) });
+
+  // Punkt im Kopf-Koordinatensystem (SVG-Einheiten) -> Welt
+  function headToWorld(px, py, sc) {
+    sc = sc || S_FULL;
+    const lx = (px - G_SVG.x) * sc, ly = (py - G_SVG.y) * sc;
+    const a = -st.th, c = Math.cos(a), sn = Math.sin(a);
+    return { x: st.gx + lx * c - ly * sn, y: st.gy + lx * sn + ly * c };
+  }
+
+  function buildCloth() {
+    st.pts = []; st.cons = [];
+    for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+      const r = restSvg(i, j);
+      st.pts.push({ rx: r.x, ry: r.y, x: 0, y: 0, px: 0, py: 0, pin: j === 0 && Math.abs(r.x - 200) <= 50 });
+    }
+    const idx = (i, j) => j * COLS + i;
+    const add = (a, b, k) => {
+      const A = st.pts[a], B = st.pts[b];
+      st.cons.push({ a, b, rest: Math.hypot(A.rx - B.rx, A.ry - B.ry), k });
+    };
+    for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+      if (i + 1 < COLS) add(idx(i, j), idx(i + 1, j), 1.0);
+      if (j + 1 < ROWS) add(idx(i, j), idx(i, j + 1), 1.0);
+      if (i + 1 < COLS && j + 1 < ROWS) { add(idx(i, j), idx(i + 1, j + 1), 0.7); add(idx(i + 1, j), idx(i, j + 1), 0.7); }
+      if (i + 2 < COLS) add(idx(i, j), idx(i + 2, j), 0.35);
+      if (j + 2 < ROWS) add(idx(i, j), idx(i, j + 2), 0.35);
+    }
+  }
+
+  function placeClothAtRest() {
+    // Körper hängt gerade unter dem Hals am Kopf (Kopf ist ungedreht)
+    for (const p of st.pts) {
+      const w = headToWorld(p.rx, p.ry);
+      p.x = p.px = w.x; p.y = p.py = w.y;
+    }
+  }
+
+  // Position im Körper (SVG-Koordinaten) -> Welt, bilinear über das Gitter
+  function meshAt(sx, sy) {
+    const u = clamp((sx - bb.ox) / bb.w, 0, 0.9999) * (COLS - 1);
+    const v = clamp((sy - bb.oy) / bb.h, 0, 0.9999) * (ROWS - 1);
+    const i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j;
+    const p00 = st.pts[j * COLS + i], p10 = st.pts[j * COLS + i + 1];
+    const p01 = st.pts[(j + 1) * COLS + i], p11 = st.pts[(j + 1) * COLS + i + 1];
+    return {
+      x: (p00.x * (1 - fu) + p10.x * fu) * (1 - fv) + (p01.x * (1 - fu) + p11.x * fu) * fv,
+      y: (p00.y * (1 - fu) + p10.y * fu) * (1 - fv) + (p01.y * (1 - fu) + p11.y * fu) * fv
+    };
+  }
+
+  // ---------- Physik ----------
+  function substep(dt) {
+    const s = S_FULL;   // Die Physik läuft immer in voller Größe; nur das Bild wird verkleinert.
+
+    // Greifpunkt: gedämpfte Feder zur Zielposition (Maus bzw. Notch)
+    const w = st.omega, z = 0.95;
+    const ax = w * w * (st.target.x - st.gx) - 2 * z * w * st.gvx;
+    const ay = w * w * (st.target.y - st.gy) - 2 * z * w * st.gvy;
+    st.gvx += ax * dt; st.gvy += ay * dt;
+    st.gx += st.gvx * dt; st.gy += st.gvy * dt;
+
+    // Kopf: Pendel um den Greifpunkt (Pivot wird beschleunigt)
+    const Lh = 105 * s;
+    const acc = (-ax * 0.8 * Math.cos(st.th) - (GRAV - ay * 0.8) * Math.sin(st.th)) / Lh - 3.4 * st.thv;
+    st.thv += acc * dt; st.th += st.thv * dt;
+    if (st.th > 1.25) { st.th = 1.25; st.thv = Math.min(0, st.thv) * -0.3; }
+    if (st.th < -1.25) { st.th = -1.25; st.thv = Math.max(0, st.thv) * -0.3; }
+    if (st.phase === 'return') { st.thv *= 0.96; st.th *= 0.985; }
+
+    // Stoff: Verlet + Distanzbedingungen
+    for (const p of st.pts) {
+      if (p.pin) {
+        const q = headToWorld(p.rx, p.ry);
+        p.px = p.x; p.py = p.y; p.x = q.x; p.y = q.y;
+      } else {
+        const vx = (p.x - p.px) * DAMP, vy = (p.y - p.py) * DAMP;
+        p.px = p.x; p.py = p.y;
+        p.x += vx; p.y += vy + GRAV * dt * dt;
+        const q = headToWorld(p.rx, p.ry);
+        p.x += (q.x - p.x) * SHAPE; p.y += (q.y - p.y) * SHAPE;
+      }
+    }
+    for (let it = 0; it < ITER; it++) {
+      const n = st.cons.length, fwd = (it % 2 === 0);
+      for (let q = 0; q < n; q++) {
+        const c = st.cons[fwd ? q : n - 1 - q];
+        const A = st.pts[c.a], B = st.pts[c.b];
+        const dx = B.x - A.x, dy = B.y - A.y;
+        const d = Math.hypot(dx, dy) || 1e-6;
+        const diff = (d - c.rest * s) / d * c.k;
+        const wa = A.pin ? 0 : 1, wb = B.pin ? 0 : 1, ws = wa + wb;
+        if (ws === 0) continue;
+        const ox = dx * diff / ws, oy = dy * diff / ws;
+        if (wa) { A.x += ox * wa; A.y += oy * wa; }
+        if (wb) { B.x -= ox * wb; B.y -= oy * wb; }
+      }
+    }
+
+    // Arme: Pendel an den Schultern, Schulter-Beschleunigung aus dem letzten Frame
+    const tau = shoulderTilt();
+    for (const key of ['l', 'r']) {
+      const a = st.arms[key];
+      const L = ARM_COM * s;
+      const sg = key === 'l' ? -1 : 1;
+      const accA = (-a.ax * Math.cos(a.th) - (GRAV - a.ay) * Math.sin(a.th)) / L - 2.2 * a.v;
+      a.v += accA * dt; a.th += a.v * dt;
+      // relativ zum Körper begrenzen: der Arm bleibt neben dem Körper (hinter ihm)
+      const rel = a.th + tau;
+      const lo = sg < 0 ? -ARM_LIMIT.max : ARM_LIMIT.min;
+      const hi = sg < 0 ? -ARM_LIMIT.min : ARM_LIMIT.max;
+      if (rel < lo) { a.th = lo - tau; if (a.v < 0) a.v *= -0.25; }
+      if (rel > hi) { a.th = hi - tau; if (a.v > 0) a.v *= -0.25; }
+    }
+  }
+
+  function shoulderTilt() {
+    const L = meshAt(SHOULDER.l.x, SHOULDER.l.y), R = meshAt(SHOULDER.r.x, SHOULDER.r.y);
+    return Math.atan2(R.y - L.y, R.x - L.x);
+  }
+
+  // Schulter-Beschleunigung einmal pro Frame schätzen (geglättet)
+  function updateArmAccel(dt) {
+    for (const key of ['l', 'r']) {
+      const a = st.arms[key];
+      const P = meshAt(SHOULDER[key].x, SHOULDER[key].y);
+      if (!a.has) { a.has = true; a.pax = P.x; a.pay = P.y; a.vx = 0; a.vy = 0; return; }
+      const vx = (P.x - a.pax) / dt, vy = (P.y - a.pay) / dt;
+      const ax = (vx - a.vx) / dt, ay = (vy - a.vy) / dt;
+      a.ax += (clamp(ax, -60000, 60000) - a.ax) * 0.25;
+      a.ay += (clamp(ay, -60000, 60000) - a.ay) * 0.25;
+      a.vx = vx; a.vy = vy; a.pax = P.x; a.pay = P.y;
+    }
+  }
+
+  // ---------- Ablauf ----------
+  function tick(dt) {
+    st.t += dt;
+    if (st.phase === 'drag') {
+      const e = clamp(st.t / EMERGE_T, 0, 1);
+      st.s = S0 + (S_FULL - S0) * easeOutBack(e);
+      st.lambda = 1 - easeOutCubic(e);
+      st.omega = 38;
+    } else if (st.phase === 'return') {
+      st.tr += dt;
+      const e = clamp(st.tr / RETURN_T, 0, 1), k = easeInCubic(e);
+      st.s = st.sFrom + (S0 - st.sFrom) * k;
+      st.lambda = st.lamFrom + (1 - st.lamFrom) * k;
+      st.omega = 30;
+      cv.style.opacity = String(1 - clamp((e - 0.88) / 0.12, 0, 1));
+      if (e >= 1) { finish(); return false; }
+    }
+    st.acc += dt;
+    let n = 0;
+    while (st.acc >= SUB && n < 30) { substep(SUB); st.acc -= SUB; n++; }
+    updateArmAccel(Math.max(dt, 1 / 240));
+    return true;
+  }
+
+  function finish() {
+    st.active = false; st.phase = 'idle';
+    cv.style.display = 'none';
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    try { window.webkit.messageHandlers.teddy.postMessage('done'); } catch (e) { /* im Browser-Test nicht vorhanden */ }
+  }
+
+  // ---------- Zeichnen ----------
+  function drawTri(img, s0, s1, s2, d0, d1, d2) {
+    // Zieldreieck minimal aufblasen, damit keine feinen Nähte zwischen Dreiecken entstehen
+    const cx = (d0.x + d1.x + d2.x) / 3, cy = (d0.y + d1.y + d2.y) / 3, e = 0.7;
+    const grow = p => { const dx = p.x - cx, dy = p.y - cy, l = Math.hypot(dx, dy) || 1; return { x: p.x + dx / l * e, y: p.y + dy / l * e }; };
+    const g0 = grow(d0), g1 = grow(d1), g2 = grow(d2);
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(g0.x, g0.y); ctx.lineTo(g1.x, g1.y); ctx.lineTo(g2.x, g2.y); ctx.closePath(); ctx.clip();
+    const den = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+    if (Math.abs(den) > 1e-9) {
+      const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / den;
+      const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / den;
+      const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / den;
+      const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) / den;
+      const ee = (d0.x * (s1.x * s2.y - s2.x * s1.y) + d1.x * (s2.x * s0.y - s0.x * s2.y) + d2.x * (s0.x * s1.y - s1.x * s0.y)) / den;
+      const f = (d0.y * (s1.x * s2.y - s2.x * s1.y) + d1.y * (s2.x * s0.y - s0.x * s2.y) + d2.y * (s0.x * s1.y - s1.x * s0.y)) / den;
+      ctx.transform(a, b, c, d, ee, f);
+      ctx.drawImage(img, 0, 0);
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    if (!ready) return;
+    const ox = st.gx - GX, oy = st.gy - GY;      // Weltposition der Zeichenfläche
+    cv.style.transform = 'translate3d(' + ox.toFixed(2) + 'px,' + oy.toFixed(2) + 'px,0)';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    const lam = st.lambda, s = st.s, r = s / S_FULL;
+    const view = p => ({ x: st.gx + (p.x - st.gx) * r, y: st.gy + (p.y - st.gy) * r });
+    const neck = view(headToWorld(NECK_SVG.x, NECK_SVG.y));
+    const toCanvas = p => ({ x: p.x - ox, y: p.y - oy });
+    const lerpN = p => ({ x: p.x + (neck.x - p.x) * lam, y: p.y + (neck.y - p.y) * lam });
+
+    // 1) Arme (hinter dem Körper)
+    const armImg = imgs.arm, A = LAYERS.arm;
+    for (const key of ['l', 'r']) {
+      const a = st.arms[key];
+      const P = toCanvas(lerpN(view(meshAt(SHOULDER[key].x, SHOULDER[key].y))));
+      const sgn = key === 'l' ? 1 : -1;
+      const rot = key === 'l' ? (Math.PI / 2 - TIP_ANG_L - a.th)
+                              : (Math.PI / 2 - (Math.PI - TIP_ANG_L) - a.th);
+      const sc = s * (1 - 0.92 * lam);
+      ctx.save();
+      ctx.translate(P.x, P.y);
+      ctx.rotate(rot);
+      ctx.scale(sgn * sc / K, sc / K);
+      ctx.drawImage(armImg, -(SHOULDER.l.x - A.ox) * K, -(SHOULDER.l.y - A.oy) * K);
+      ctx.restore();
+    }
+
+    // 2) Körper als Dreiecksnetz
+    const bimg = imgs.body, W = bimg.naturalWidth, H = bimg.naturalHeight;
+    const P = st.pts.map(p => toCanvas(lerpN(view(p))));
+    for (let j = 0; j < ROWS - 1; j++) for (let i = 0; i < COLS - 1; i++) {
+      const u0 = i / (COLS - 1) * W, u1 = (i + 1) / (COLS - 1) * W;
+      const v0 = j / (ROWS - 1) * H, v1 = (j + 1) / (ROWS - 1) * H;
+      const p00 = P[j * COLS + i], p10 = P[j * COLS + i + 1], p01 = P[(j + 1) * COLS + i], p11 = P[(j + 1) * COLS + i + 1];
+      drawTri(bimg, { x: u0, y: v0 }, { x: u1, y: v0 }, { x: u0, y: v1 }, p00, p10, p01);
+      drawTri(bimg, { x: u1, y: v0 }, { x: u1, y: v1 }, { x: u0, y: v1 }, p10, p11, p01);
+    }
+
+    // 3) Kopf (dreht sich um den Greifpunkt)
+    const H0 = LAYERS.head;
+    ctx.save();
+    ctx.translate(GX, GY);
+    ctx.rotate(-st.th);
+    ctx.scale(s / K, s / K);
+    ctx.drawImage(imgs.head, -(G_SVG.x - H0.ox) * K, -(G_SVG.y - H0.oy) * K);
+    ctx.restore();
+  }
+
+  // ---------- Schnittstelle zu Swift ----------
+  function loop(ts) {
+    if (!st.active || st.manual) return;
+    const dt = clamp((ts - (st.lastTs || ts)) / 1000, 0.001, 0.05);
+    st.lastTs = ts;
+    if (tick(dt)) { draw(); requestAnimationFrame(loop); }
+  }
+
+  const api = {
+    begin(x, y) {
+      if (st.active && st.phase === 'return') { st.phase = 'drag'; st.t = EMERGE_T; st.target = { x, y }; cv.style.opacity = '1'; if (!st.manual) { st.lastTs = 0; requestAnimationFrame(loop); } return; }
+      buildCloth();
+      st.active = true; st.phase = 'drag'; st.t = 0; st.acc = 0; st.lastTs = 0;
+      st.p0 = { x, y }; st.target = { x, y };
+      st.s = S0; st.lambda = 1; st.th = 0; st.thv = 0;
+      st.gx = x; st.gy = y - (HEAD_COM_Y - G_SVG.y) * S0; st.gvx = 0; st.gvy = 0; st.omega = 38;
+      st.arms.l = { th: -0.9, v: 0, ax: 0, ay: 0, vx: 0, vy: 0, pax: 0, pay: 0, has: false };
+      st.arms.r = { th: 0.9, v: 0, ax: 0, ay: 0, vx: 0, vy: 0, pax: 0, pay: 0, has: false };
+      placeClothAtRest();
+      cv.style.opacity = '1'; cv.style.display = 'block';
+      if (!st.manual) requestAnimationFrame(loop);
+    },
+    mouse(x, y) { if (st.phase === 'drag') st.target = { x, y }; },
+    end() {
+      if (!st.active || st.phase === 'return') return;
+      st.phase = 'return'; st.tr = 0; st.sFrom = st.s; st.lamFrom = st.lambda;
+      st.target = { x: st.p0.x, y: st.p0.y - (HEAD_COM_Y - G_SVG.y) * S0 };
+      if (!st.manual) { st.lastTs = 0; requestAnimationFrame(loop); }
+    },
+    // nur für Tests: feste Zeitschritte statt Animationsloop
+    _manual(on) { st.manual = on; },
+    _step(n, dt) { for (let i = 0; i < n && st.active; i++) { if (!tick(dt)) break; } draw(); return st.active; },
+    _state: st
+  };
+  window.teddyDrag = api;
+})();
+</script>
+</body>
+</html>

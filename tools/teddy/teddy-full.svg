@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <radialGradient id="gHead" cx="0.36" cy="0.28" r="0.85">
+      <stop offset="0" stop-color="#FFFCF0"/>
+      <stop offset="0.45" stop-color="#F4EBD0"/>
+      <stop offset="0.85" stop-color="#E3D6AC"/>
+      <stop offset="1" stop-color="#C9B88A"/>
+    </radialGradient>
+    <radialGradient id="gMuzzle" cx="0.42" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#FFFEF8"/>
+      <stop offset="0.6" stop-color="#F6EEDA"/>
+      <stop offset="1" stop-color="#EBE0BC"/>
+    </radialGradient>
+    <radialGradient id="gEar" cx="0.38" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#FBF3DB"/>
+      <stop offset="0.6" stop-color="#F0E4C0"/>
+      <stop offset="1" stop-color="#C9B887"/>
+    </radialGradient>
+    <radialGradient id="gEarIn" cx="0.5" cy="0.4" r="0.75">
+      <stop offset="0" stop-color="#FBE7AE"/>
+      <stop offset="0.7" stop-color="#EDCB7F"/>
+      <stop offset="1" stop-color="#C9A55A"/>
+    </radialGradient>
+    <radialGradient id="gBody" cx="0.38" cy="0.22" r="0.95">
+      <stop offset="0" stop-color="#FDEEB9"/>
+      <stop offset="0.5" stop-color="#F3DFA3"/>
+      <stop offset="1" stop-color="#CFB46C"/>
+    </radialGradient>
+    <radialGradient id="gBelly" cx="0.4" cy="0.25" r="0.85">
+      <stop offset="0" stop-color="#FFF6D8"/>
+      <stop offset="0.6" stop-color="#F8EDC8"/>
+      <stop offset="1" stop-color="#E3D09A"/>
+    </radialGradient>
+    <linearGradient id="gArm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFAEA"/>
+      <stop offset="0.45" stop-color="#F3EACF"/>
+      <stop offset="1" stop-color="#C4B58C"/>
+    </linearGradient>
+    <radialGradient id="gNose" cx="0.35" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#9A6470"/>
+      <stop offset="0.5" stop-color="#6E3B45"/>
+      <stop offset="1" stop-color="#41202A"/>
+    </radialGradient>
+    <radialGradient id="gEye" cx="0.38" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#8A5A66"/>
+      <stop offset="0.55" stop-color="#5E3440"/>
+      <stop offset="1" stop-color="#341A22"/>
+    </radialGradient>
+
+    <pattern id="thread" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="3" height="3" fill="none"/>
+      <line x1="0" y1="1.5" x2="3" y2="1.5" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="1"/>
+      <line x1="0" y1="0" x2="3" y2="0" stroke="#000000" stroke-opacity="0.18" stroke-width="0.8"/>
+    </pattern>
+
+    <!-- Stoff Jersey: feine Gewebestruktur, glatte Kanten -->
+    <filter id="fabricKnit" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="500" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="1.1 0.7" numOctaves="3" seed="3" result="weave"/>
+      <feDiffuseLighting in="weave" lighting-color="#FFFFFF" surfaceScale="1.8" diffuseConstant="1.05" result="lit">
+        <feDistantLight azimuth="225" elevation="68"/>
+      </feDiffuseLighting>
+      <feComponentTransfer in="lit" result="litSoft"><feFuncR type="linear" slope="0.30" intercept="0.74"/><feFuncG type="linear" slope="0.30" intercept="0.74"/><feFuncB type="linear" slope="0.30" intercept="0.74"/></feComponentTransfer>
+      <feComposite in="litSoft" in2="SourceGraphic" operator="in" result="litMasked"/>
+      <feBlend in="SourceGraphic" in2="litMasked" mode="multiply"/>
+    </filter>
+
+    <!-- Stoff Velours: weicher Flor, glatte Kanten -->
+    <filter id="fabricVelvet" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="500" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6 0.35" numOctaves="3" seed="5" result="pile"/>
+      <feDiffuseLighting in="pile" lighting-color="#FFFFFF" surfaceScale="1.1" diffuseConstant="1.08" result="lit">
+        <feDistantLight azimuth="225" elevation="72"/>
+      </feDiffuseLighting>
+      <feComponentTransfer in="lit" result="litSoft"><feFuncR type="linear" slope="0.30" intercept="0.74"/><feFuncG type="linear" slope="0.30" intercept="0.74"/><feFuncB type="linear" slope="0.30" intercept="0.74"/></feComponentTransfer>
+      <feComposite in="litSoft" in2="SourceGraphic" operator="in" result="litMasked"/>
+      <feBlend in="SourceGraphic" in2="litMasked" mode="multiply"/>
+    </filter>
+
+    <!-- Abgewetzte, flauschige Stelle (nur hier bewusst fusselig) -->
+    <filter id="fluff" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="500">
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="3" seed="12" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation="0.6"/>
+    </filter>
+
+    <filter id="blur2" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="blur4" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="blur8" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="blur12" filterUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="600"><feGaussianBlur stdDeviation="12"/></filter>
+
+    <clipPath id="clipNose"><rect x="165" y="119" width="72" height="43" rx="26" ry="21.5"/></clipPath>
+    <clipPath id="clipEyeL"><ellipse cx="158" cy="94" rx="8" ry="11.5" transform="rotate(-6 158 94)"/></clipPath>
+    <clipPath id="clipEyeR"><ellipse cx="246" cy="94" rx="8" ry="11.5" transform="rotate(6 246 94)"/></clipPath>
+  </defs>
+
+  <rect width="400" height="500" fill="#1E1E24"/>
+
+  <g id="teddy">
+    <ellipse cx="205" cy="484" rx="128" ry="13" fill="#000000" opacity="0.55" filter="url(#blur8)"/>
+
+    <!-- Arme -->
+    <g id="arm-l">
+      <path d="M170 258 C125 250 82 262 58 298 C46 318 68 338 86 322 C106 298 140 290 172 294 Z" fill="url(#gArm)" filter="url(#fabricKnit)"/>
+      <path d="M62 316 C70 334 84 330 90 318" stroke="#B3A37A" stroke-width="3" fill="none" opacity="0.35" filter="url(#blur2)"/>
+    </g>
+    <g id="arm-r">
+      <path d="M230 258 C275 250 318 262 342 298 C354 318 332 338 314 322 C294 298 260 290 228 294 Z" fill="url(#gArm)" filter="url(#fabricKnit)"/>
+      <path d="M338 316 C330 334 316 330 310 318" stroke="#9E8E64" stroke-width="3" fill="none" opacity="0.4" filter="url(#blur2)"/>
+    </g>
+
+    <!-- Körper -->
+    <g id="body">
+      <path d="M166 235 C150 300 88 360 98 432 C108 484 292 484 302 432 C312 360 250 300 234 235 Z" fill="url(#gBody)" filter="url(#fabricVelvet)"/>
+      <ellipse cx="200" cy="385" rx="56" ry="78" fill="url(#gBelly)" filter="url(#fabricVelvet)"/>
+      <path d="M150 300 C165 340 150 385 118 425" stroke="#9C803A" stroke-width="12" fill="none" opacity="0.30" filter="url(#blur8)"/>
+      <path d="M258 292 C242 340 258 392 288 432" stroke="#8C7030" stroke-width="14" fill="none" opacity="0.38" filter="url(#blur8)"/>
+      <path d="M188 280 C192 330 182 385 176 442" stroke="#FFF8DC" stroke-width="16" fill="none" opacity="0.40" filter="url(#blur8)"/>
+      <path d="M112 448 C150 478 250 478 290 448" stroke="#B89B50" stroke-width="5" fill="none" opacity="0.4" filter="url(#blur2)"/>
+      <ellipse cx="150" cy="430" rx="30" ry="22" fill="#D9B85A" opacity="0.18" filter="url(#blur12)"/>
+      <ellipse cx="258" cy="410" rx="26" ry="30" fill="#D0AE50" opacity="0.15" filter="url(#blur12)"/>
+    </g>
+
+    <ellipse cx="170" cy="272" rx="14" ry="22" fill="#6E5A2A" opacity="0.30" filter="url(#blur4)"/>
+    <ellipse cx="232" cy="272" rx="14" ry="22" fill="#6E5A2A" opacity="0.38" filter="url(#blur4)"/>
+
+    <!-- Hals -->
+    <ellipse cx="204" cy="246" rx="58" ry="16" fill="#4A3A15" opacity="0.50" filter="url(#blur8)"/>
+    <ellipse cx="200" cy="238" rx="42" ry="10" fill="#FBF6E6" filter="url(#fabricKnit)"/>
+    <path d="M160 238 C185 249 215 249 240 238" stroke="#C9BC96" stroke-width="3" fill="none" opacity="0.6" filter="url(#blur2)"/>
+
+    <g id="head">
+      <!-- Ohren: hinter dem Kopf, hochovale Form, innen gelblich -->
+      <g id="ear-l" transform="rotate(-10 121 100)">
+        <ellipse cx="121" cy="100" rx="26" ry="31" fill="url(#gEar)" filter="url(#fabricKnit)"/>
+        <ellipse cx="127" cy="102" rx="15" ry="20" fill="url(#gEarIn)" filter="url(#fabricVelvet)"/>
+        <ellipse cx="119" cy="116" rx="12" ry="5" fill="#7A5E22" opacity="0.25" filter="url(#blur4)"/>
+      </g>
+      <g id="ear-r" transform="rotate(10 283 100)">
+        <ellipse cx="283" cy="100" rx="26" ry="31" fill="url(#gEar)" filter="url(#fabricKnit)"/>
+        <ellipse cx="277" cy="102" rx="15" ry="20" fill="url(#gEarIn)" filter="url(#fabricVelvet)"/>
+        <ellipse cx="285" cy="116" rx="12" ry="5" fill="#7A5E22" opacity="0.30" filter="url(#blur4)"/>
+      </g>
+      <!-- Schatten des Kopfes auf den Ohren -->
+      <circle cx="203" cy="154" r="92" fill="#4A3A15" opacity="0.35" filter="url(#blur8)"/>
+
+      <!-- Kopf -->
+      <circle cx="200" cy="150" r="92" fill="url(#gHead)" filter="url(#fabricKnit)"/>
+      <ellipse cx="200" cy="96" rx="78" ry="22" fill="#9C8D66" opacity="0.12" filter="url(#blur8)"/>
+
+      <!-- Schnauze: groß, füllt die untere Kopfhälfte -->
+      <ellipse cx="204" cy="182" rx="62" ry="56" fill="#5A4A22" opacity="0.10" filter="url(#blur8)"/>
+      <ellipse cx="202" cy="180" rx="62" ry="56" fill="url(#gMuzzle)" filter="url(#fabricKnit)"/>
+
+      <!-- Abgenutzte Stelle rechts an der Schnauze -->
+      <g id="worn" filter="url(#fluff)">
+        <circle cx="236" cy="172" r="15" fill="#FFFFFF"/>
+        <circle cx="226" cy="190" r="12" fill="#FFFDF5"/>
+        <circle cx="248" cy="160" r="9" fill="#FFFFFF"/>
+        <circle cx="208" cy="214" r="9" fill="#FBF7EA"/>
+        <circle cx="222" cy="210" r="8" fill="#FFFFFF"/>
+      </g>
+      <g stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" opacity="0.85" fill="none">
+        <path d="M246 164 q6 -6 10 -3"/>
+        <path d="M250 178 q7 -2 9 3"/>
+        <path d="M232 202 q2 7 8 8"/>
+        <path d="M214 222 q-1 6 4 8"/>
+        <path d="M252 190 q5 3 4 8"/>
+      </g>
+
+      <!-- Nase: groß und breit, wie beim Original -->
+      <rect x="167" y="127" width="72" height="43" rx="26" ry="21.5" fill="#2A1218" opacity="0.45" filter="url(#blur4)"/>
+      <rect x="165" y="119" width="72" height="43" rx="26" ry="21.5" fill="url(#gNose)"/>
+      <g clip-path="url(#clipNose)"><rect x="160" y="115" width="84" height="55" fill="url(#thread)"/></g>
+      <rect x="165" y="119" width="72" height="43" rx="26" ry="21.5" fill="none" stroke="#2F161D" stroke-width="1.3" opacity="0.6"/>
+      <ellipse cx="185" cy="131" rx="7" ry="3.6" fill="#FFFFFF" transform="rotate(-12 185 131)"/>
+
+      <!-- Augen: breit-oval mit hellem Stickrand, hoch im Gesicht -->
+      <g id="eyes">
+        <ellipse cx="159" cy="98" rx="12" ry="16" fill="#4A3A22" opacity="0.28" filter="url(#blur4)" transform="rotate(-6 159 98)"/>
+        <ellipse cx="158" cy="94" rx="12" ry="16" fill="none" stroke="#FFFFFF" stroke-width="1.6" opacity="0.6" transform="rotate(-6 158 94)"/>
+        <ellipse cx="158" cy="94" rx="8" ry="11.5" fill="url(#gEye)" transform="rotate(-6 158 94)"/>
+        <g clip-path="url(#clipEyeL)"><rect x="140" y="78" width="34" height="32" fill="url(#thread)"/></g>
+        <ellipse cx="155" cy="89" rx="2.4" ry="3" fill="#FFFFFF"/>
+
+        <ellipse cx="247" cy="98" rx="12" ry="16" fill="#4A3A22" opacity="0.28" filter="url(#blur4)" transform="rotate(6 247 98)"/>
+        <ellipse cx="246" cy="94" rx="12" ry="16" fill="none" stroke="#FFFFFF" stroke-width="1.6" opacity="0.6" transform="rotate(6 246 94)"/>
+        <ellipse cx="246" cy="94" rx="8" ry="11.5" fill="url(#gEye)" transform="rotate(6 246 94)"/>
+        <g clip-path="url(#clipEyeR)"><rect x="230" y="78" width="34" height="32" fill="url(#thread)"/></g>
+        <ellipse cx="243" cy="89" rx="2.4" ry="3" fill="#FFFFFF"/>
+      </g>
+
+      <!-- Lächeln: breit und flach -->
+      <path d="M142 194 Q204 220 264 190" stroke="#2C1A10" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.30" filter="url(#blur2)"/>
+      <path id="mouth" d="M142 191 Q204 217 264 187" stroke="#8A4B3A" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <path d="M146 190 Q204 213 260 186" stroke="#D49A82" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+      <ellipse cx="168" cy="82" rx="30" ry="12" fill="#FFFFFF" opacity="0.26" filter="url(#blur8)" transform="rotate(-20 166 70)"/>
+    </g>
+  </g>
+</svg>

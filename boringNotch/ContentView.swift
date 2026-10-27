@@ -27,6 +27,11 @@ struct ContentView: View {
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
 
+    // Teddy: am Kopf aus der Notch ziehen
+    @ObservedObject var teddyDrag = TeddyDragController.shared
+    @State private var teddyPressed = false
+    @State private var teddyGrabTask: Task<Void, Never>?
+
     @State private var gestureProgress: CGFloat = .zero
 
     @State private var haptics: Bool = false
@@ -366,6 +371,37 @@ struct ContentView: View {
         .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $vm.generalDropTargeting))
     }
 
+    /// Maustaste auf dem Teddy-Kopf: kurz halten oder bewegen zieht den Teddy heraus,
+    /// ein kurzer Klick öffnet die Notch wie bisher.
+    private var teddyGrabGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                let moved = hypot(value.translation.width, value.translation.height)
+                if !teddyPressed {
+                    teddyPressed = true
+                    teddyGrabTask = Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 120_000_000)
+                        if !Task.isCancelled && teddyPressed {
+                            TeddyDragController.shared.begin()
+                        }
+                    }
+                } else if moved > 4 && !TeddyDragController.shared.isActive {
+                    TeddyDragController.shared.begin()
+                }
+            }
+            .onEnded { value in
+                let moved = hypot(value.translation.width, value.translation.height)
+                teddyPressed = false
+                teddyGrabTask?.cancel()
+                teddyGrabTask = nil
+                let wasActive = TeddyDragController.shared.isActive
+                TeddyDragController.shared.end()
+                if !wasActive && moved < 4 {
+                    doOpen()
+                }
+            }
+    }
+
     @ViewBuilder
     func BoringFaceAnimation() -> some View {
         HStack {
@@ -384,6 +420,10 @@ struct ContentView: View {
                         width: max(0, vm.effectiveClosedNotchHeight - 12) + 8,
                         height: max(0, vm.effectiveClosedNotchHeight - 6)
                     )
+                    .opacity(teddyDrag.isActive ? 0 : 1)
+                    .animation(.easeOut(duration: 0.12), value: teddyDrag.isActive)
+                    .contentShape(Rectangle())
+                    .gesture(teddyGrabGesture)
             }
         }.frame(
             height: vm.effectiveClosedNotchHeight,

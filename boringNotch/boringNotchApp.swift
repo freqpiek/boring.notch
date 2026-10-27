@@ -368,6 +368,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Teddy: Push-to-Talk (Taste gedrückt halten)
         Task { @MainActor [weak self] in
+            TeddyDragController.shared.preload()
             TeddyAssistant.shared.onFinished = { [weak self] in
                 guard let self else { return }
                 if self.teddyOpenedNotch {
